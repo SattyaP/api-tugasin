@@ -1,0 +1,26 @@
+{
+  "name": "api-tugasin",
+  "version": "1.0.0",
+  "description": "api for application tugasin to get tugas from ebelajar",
+  "main": "app.js",
+  "type": "module",
+  "scripts": {
+    "start": "nodemon app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SattyaP/api-tugasin.git"
+  },
+  "author": "SattyaP",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/SattyaP/api-tugasin/issues"
+  },
+  "homepage": "https://github.com/SattyaP/api-tugasin#readme",
+  "dependencies": {
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "nodemon": "^3.1.10",
+    "puppeteer": "^24.7.2"
+  }
+}
