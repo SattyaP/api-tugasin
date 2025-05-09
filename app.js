@@ -2,7 +2,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import puppeteer from 'puppeteer';
 
-const timeout = process.env.TIMEOUT || 3000;
+const timeout = parseInt(process.env.TIMEOUT) || 3000;
 const PORT = process.env.PORT || 3000;
 
 dotenv.config();
@@ -20,13 +20,24 @@ const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 const fetchTasks = async (username, password) => {
     const browser = await puppeteer.launch({
-        headless: false,
+        headless: "new",
         defaultViewport: null,
-        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
 
     try {
-        const page = await browser.newPage();
+        const page = (await browser.pages())[0];
+
+        page.setRequestInterception(true)
+
+        page.on('request', async request => {
+            if (['image', 'fetch', 'media', 'font', 'stylesheet'].includes(request.resourceType())) {
+                request.abort();
+            } else {
+                request.continue();
+            }
+        })
+
         console.log('Navigating to login page...');
         await page.goto('https://ebelajar.stiki.ac.id/login', {
             waitUntil: ['domcontentloaded', 'networkidle2'],
@@ -47,13 +58,20 @@ const fetchTasks = async (username, password) => {
             throw new Error('Login failed!');
         }
 
+        try {
+            await page.waitForSelector('#action-menu-toggle-0 > span > span.usertext', { timeout: 15000 });
+        } catch (error) {
+            console.error('Error waiting for user text:', error.message);
+            throw new Error('Login failed! ');
+        }
+
         console.log('Login successful!');
         const user = await page.$eval(
             '#action-menu-toggle-0 > span > span.usertext',
             (el) => el.innerText.trim().split('id ')[1]
         );
 
-        console.log(`Logged in as: ${user}`)        
+        console.log(`Logged in as: ${user}`)
         console.log('Fetching tasks...');
 
         await sleep(timeout);
@@ -113,7 +131,7 @@ const fetchTasks = async (username, password) => {
             }, {});
         });
 
-        logging('Tasks fetched successfully!');
+        console.log('Tasks fetched successfully!');
 
         return { user, tasks };
     } finally {
@@ -143,5 +161,5 @@ app.post('/get-tugas', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Server running on http://127.0.0.1:${PORT}`);
 });
